@@ -15,6 +15,7 @@ import java.util.Scanner;
 import java.util.zip.ZipEntry;
 
 import javax.management.openmbean.OpenDataException;
+
 import org.omg.PortableServer.THREAD_POLICY_ID;
 import org.omg.PortableServer.ThreadPolicyOperations;
 
@@ -54,8 +55,8 @@ public class Engine {
 	public void start() throws IOException{
 		System.out.println("Elija una opción: \n" + 
 				" (1) generar mutante \n" + 
-				" (2) aplicar test suite óptimo \n" + 
-				" (3) aplicar test suite por niveles");
+				" (2) aplicar test \n" + 
+				" (3) aplicar test suite");
 		int op = this.sc.nextInt();
 		if(op == 1)
 			generateMutant();
@@ -93,7 +94,7 @@ public class Engine {
 				int randomPosition = randInt(2, mutant.size() - 1);
 				mutant.set(randomPosition, 1); // Metemos un error entre la raíz y el tamaño del array
 				mutant.set(0, -1);
-				calculateWeigh(origen, mutant);
+				calculateOnlyError(origen, mutant);
 				saveMutant(mutant);
 				this.weighMutant = 0;
 			}
@@ -111,7 +112,7 @@ public class Engine {
 				this.fileName = "prueba" + i + ".txt";
 				this.fileWrite = new CustomFileWrite(this.fileName);
 				ArrayList<Integer> mutant = initializeMutant();
-				calculateWeigh(origen, mutant);
+				calculateFirtsWeigh(origen, mutant);
 				saveMutant(mutant);
 				this.weighMutant = 0; // En cada mutante reiniciamos el weigh
 			}
@@ -283,7 +284,7 @@ public class Engine {
 	}
 	
 	/**
-	 * Calcula el peso del mutante comparándolo con el origen
+	 * Calcula el peso de los mutantes del primer ejemplo
 	 * @param origen
 	 * @param mutant
 	 * @return
@@ -304,7 +305,27 @@ public class Engine {
 	}
 	
 	/**
-	 * Calcula el peso del mutante basándose sólo en el primer error encontrado
+	 * Calcula el peso de los mutantes del tercer ejemplo
+	 * @param origen
+	 * @param mutant
+	 * @return
+	 */
+	public void calculateOnlyError(ArrayList<Integer> origen, ArrayList<Integer> mutant){
+		int interval = 1, base = 4, exponent = 0;
+		double penalty = 4;
+		for(int i = 2; i < this.nodes; i++){ // 'i = 2', la raíz no tiene peso (no tiene sentido que lo tenga)
+			if(i == interval * 2){ // Comprobamos si es necesario actualizar la penalización (porque hemos "descendido" en el árbol)
+				exponent++; // Incrementamos el exponente
+				penalty = Math.pow(base, exponent);
+				interval = interval * 2;
+			}
+			if(origen.get(i) != mutant.get(i)) // Si los elementos i-ésimos son distintos
+				this.weighMutant = this.weighMutant + (1/penalty); // Actualizamos el peso del muntante; new weigh = weigh + 1/penalty
+		}
+	}
+	
+	/**
+	 * Calcula el peso de los mutantes del segundo ejemplo
 	 * @param origen
 	 * @param mutant
 	 */
